@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -36,16 +37,27 @@ public class ConnectedActivity extends AppCompatActivity {
      */
     private ViewPager mViewPager;
 
-    @Override
+    final static String DEBUG = ConnectedActivity.class.getName();
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connected);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
         setSupportActionBar(toolbar);
+        toolbar.setSubtitle("Connecting...");
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(DEBUG, "back");
+                finish();
+            }
+        });
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
@@ -94,7 +106,19 @@ public class ConnectedActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1);
+            Fragment fragment = null;
+            switch (position){
+                case 0:
+                    fragment = CurvalsFragment.newInstance();
+                    break;
+                case 1:
+                    fragment = ConfigFragment.newInstance();
+                    break;
+                case 2:
+                    fragment = InfoFragment.newInstance();
+                    break;
+            }
+            return fragment;
         }
 
         @Override
@@ -107,11 +131,11 @@ public class ConnectedActivity extends AppCompatActivity {
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return "SECTION 1";
+                    return "CURVALS";
                 case 1:
-                    return "SECTION 2";
+                    return "CONFIG";
                 case 2:
-                    return "SECTION 3";
+                    return "INFO";
             }
             return null;
         }

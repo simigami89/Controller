@@ -16,6 +16,9 @@ import java.util.List;
  * Created by Екатерина Захарова on 25.02.2016.
  */
 public class DeviceAdapter extends BaseAdapter{
+
+    final static String DEBUG = DeviceAdapter.class.getName();
+
     Context ctx;
     private LayoutInflater inflater;
     private List<BleDeviceInfo> objects;

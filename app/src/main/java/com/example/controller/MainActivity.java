@@ -25,7 +25,7 @@ import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String DEBUG = "DEBUG";
+    final static String DEBUG = MainActivity.class.getName();
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int REQ_DEVICE_ACT = 1;
     private static final int REQ_ENABLE_BT = 0;
