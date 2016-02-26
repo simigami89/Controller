@@ -30,9 +30,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -47,26 +49,26 @@ public class ConnectedActivity extends AppCompatActivity {
      * may be best to switch to a
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
-    private static String CHAR_CUR_VAL_I_A = "5ac70ac1-717e-11e5-a837-0800200c9a66";
-    private static String CHAR_CUR_VAL_I_B = "5ac70ac3-717e-11e5-a837-0800200c9a66";
-    private static String CHAR_CUR_VAL_I_C = "5ac70ac5-717e-11e5-a837-0800200c9a66";
-    private static String CHAR_CUR_VAL_U_A = "5ac70ac2-717e-11e5-a837-0800200c9a66";
-    private static String CHAR_CUR_VAL_U_B = "5ac70ac4-717e-11e5-a837-0800200c9a66";
-    private static String CHAR_CUR_VAL_U_C = "5ac70ac6-717e-11e5-a837-0800200c9a66";
-    private static String CHAR_LED_BLINK = "5ac70AE1-717e-11e5-a837-0800200c9a66";
-    private static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
-    private static String DEVICE_1_ADDRESS = "5ac70ad2-717e-11e5-a837-0800200c9a66";
-    private static String DEVICE_2_ADDRESS = "5ac70ad3-717e-11e5-a837-0800200c9a66";
-    private static String FIRMWARE_VERSION_CHARACTERISTIC = "00002a26-0000-1000-8000-00805f9b34fb";
-    private static String HARDWARE_VERSION_CHARACTERISTIC = "00002a27-0000-1000-8000-00805f9b34fb";
-    private static String LED_SERVICE = "5ac70ae0-717e-11e5-a837-0800200c9a66";
-    private static String MANUFACTURED_CHARACTERISTIC = "00002a29-0000-1000-8000-00805f9b34fb";
-    private static String MODEL_VERSION_CHARACTERISTIC = "00002a24-0000-1000-8000-00805f9b34fb";
-    private static String PHASE = "5ac70ad4-717e-11e5-a837-0800200c9a66";
-    private static String SERIAL_NUMBER_CHARACTERISTIC = "00002a25-0000-1000-8000-00805f9b34fb";
-    private static String SERVICE_BANK_INFO = "5ac70ad0-717e-11e5-a837-0800200c9a66";
-    private static String SERVICE_CUR_VALS = "5ac70ac0-717e-11e5-a837-0800200c9a66";
-    private static String SERVICE_DEVICE_INFO = "0000180a-0000-1000-8000-00805f9b34fb";
+    public static String CHAR_CUR_VAL_I_A = "5ac70ac1-717e-11e5-a837-0800200c9a66";
+    public static String CHAR_CUR_VAL_I_B = "5ac70ac3-717e-11e5-a837-0800200c9a66";
+    public static String CHAR_CUR_VAL_I_C = "5ac70ac5-717e-11e5-a837-0800200c9a66";
+    public static String CHAR_CUR_VAL_U_A = "5ac70ac2-717e-11e5-a837-0800200c9a66";
+    public static String CHAR_CUR_VAL_U_B = "5ac70ac4-717e-11e5-a837-0800200c9a66";
+    public static String CHAR_CUR_VAL_U_C = "5ac70ac6-717e-11e5-a837-0800200c9a66";
+    public static String CHAR_LED_BLINK = "5ac70AE1-717e-11e5-a837-0800200c9a66";
+    public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
+    public static String DEVICE_1_ADDRESS = "5ac70ad2-717e-11e5-a837-0800200c9a66";
+    public static String DEVICE_2_ADDRESS = "5ac70ad3-717e-11e5-a837-0800200c9a66";
+    public static String FIRMWARE_VERSION_CHARACTERISTIC = "00002a26-0000-1000-8000-00805f9b34fb";
+    public static String HARDWARE_VERSION_CHARACTERISTIC = "00002a27-0000-1000-8000-00805f9b34fb";
+    public static String LED_SERVICE = "5ac70ae0-717e-11e5-a837-0800200c9a66";
+    public static String MANUFACTURED_CHARACTERISTIC = "00002a29-0000-1000-8000-00805f9b34fb";
+    public static String MODEL_VERSION_CHARACTERISTIC = "00002a24-0000-1000-8000-00805f9b34fb";
+    public static String PHASE = "5ac70ad4-717e-11e5-a837-0800200c9a66";
+    public static String SERIAL_NUMBER_CHARACTERISTIC = "00002a25-0000-1000-8000-00805f9b34fb";
+    public static String SERVICE_BANK_INFO = "5ac70ad0-717e-11e5-a837-0800200c9a66";
+    public static String SERVICE_CUR_VALS = "5ac70ac0-717e-11e5-a837-0800200c9a66";
+    public static String SERVICE_DEVICE_INFO = "0000180a-0000-1000-8000-00805f9b34fb";
 
     private static BluetoothGattCharacteristic gattCharacteristic1;
 
@@ -430,6 +432,20 @@ public class ConnectedActivity extends AppCompatActivity {
     };
 
 
+    public static void writeCharacteristicValue(String service, String characteristic, byte[] bytes, View view) {
+        if (mBluetoothGatt != null) {
+            for (BluetoothGattService gattService : deviceServices) {
+                if (service.equals(gattService.getUuid().toString())) {
+                    gattCharacteristic1 = gattService.getCharacteristic(UUID.fromString(characteristic));
+                    gattCharacteristic1.setValue(bytes);
+                    mBluetoothGatt.writeCharacteristic(gattCharacteristic1);
+                    Log.d(DEBUG, "try write char");
+                }
+            }
+            return;
+        }
+        Toast.makeText(view.getContext(), "Device not connected", Toast.LENGTH_SHORT).show();
+    }
 
 
 

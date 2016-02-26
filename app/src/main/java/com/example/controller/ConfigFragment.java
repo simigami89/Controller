@@ -7,6 +7,10 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ExpandableListView;
+
+import java.util.ArrayList;
 
 
 /**
@@ -58,8 +62,28 @@ public class ConfigFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_config, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_config, container, false);
+        ExpandableListView listView = (ExpandableListView) rootView.findViewById(R.id.setting_list);
+        ArrayList<ArrayList<String>> groups = new ArrayList();
+        ArrayList<String> children1 = new ArrayList();
+        ArrayList<String> children2 = new ArrayList();
+        ArrayList<String> children3 = new ArrayList();
+        ArrayList<String> children4 = new ArrayList();
+        children1.add("Imfz");
+        children1.add("Iozz");
+        groups.add(children1);
+        children2.add("Clear accidents");
+        children2.add("Emul accident");
+        groups.add(children2);
+        children3.add("Flag in yellow");
+        children3.add("Flag in black");
+        groups.add(children3);
+        children4.add("Device1: ");
+        children4.add("Device2: ");
+        children4.add("Phase: ");
+        groups.add(children4);
+        listView.setAdapter(new ConfigAdapter(getContext(), groups));
+        return rootView;
     }
 
 //    // TODO: Rename method, update argument and hook method into UI event

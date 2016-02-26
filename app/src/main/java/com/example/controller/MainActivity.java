@@ -37,10 +37,12 @@ public class MainActivity extends AppCompatActivity {
     ListView listFoundDevice;
     Handler mHandler;
     Timer mTimer;
-    Menu myMenu;
+
     MenuItem search;
 
     DeviceAdapter mDeviceAdapter;
+    boolean bleEnabled = false;
+
     private static List<BleDeviceInfo> mDevices = new ArrayList();
 
     @Override
@@ -56,10 +58,12 @@ public class MainActivity extends AppCompatActivity {
         listFoundDevice.setAdapter(mDeviceAdapter);
 
         enableBLE();
-        startScan();
+        if(bleEnabled){
+            startScan();
+        }
         mHandler = new Handler() {
             public void handleMessage(Message msg) {
-//                MainActivity.this.search.setActionView(null);
+                search.setActionView(null);
                 mDeviceAdapter.notifyDataSetChanged();
             }
         };
@@ -70,6 +74,10 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        search = menu.findItem(R.id.action_search);
+        if(bleEnabled) {
+            search.setActionView(R.layout.progress_bar);
+        }
         return true;
     }
 
@@ -83,16 +91,19 @@ public class MainActivity extends AppCompatActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
+        }else if (id == R.id.action_search){
+            search.setActionView(R.layout.progress_bar);
+            startScan();
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    public boolean enableBLE(){
+    public void enableBLE(){
         //check BLE avaible
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
-            return false;
+
         }
         else {
             // Initializes Bluetooth adapter.
@@ -103,22 +114,23 @@ public class MainActivity extends AppCompatActivity {
             if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-                return false;
+                bleEnabled = false;
+
+            }else {
+                bleEnabled = true;
             }
-            else
-                return true;
         }
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
-            case REQ_ENABLE_BT /*0*/:
-            case REQ_DEVICE_ACT /*1*/:
+            case 0 :
+            case 1 :
                 if (resultCode == -1) {
                     Toast.makeText(this, "enabled", Toast.LENGTH_SHORT).show();
-                    //this.search.setActionView(R.layout.menu_progress_bar_layout);
-                    //this.mBleEnabled = true;
+                    search.setActionView(R.layout.progress_bar);
+                    bleEnabled = true;
                     startScan();
                     return;
                 }
@@ -132,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void startScan() {
         Log.d(DEBUG, "Searching for devices ...");
+
         if (mTimer != null) {
             this.mTimer.cancel();
         }
@@ -141,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 mHandler.sendMessage(mHandler.obtainMessage(MainActivity.REQ_ENABLE_BT));
                 Log.d(MainActivity.DEBUG, "Search complete");
+
             }
         }, SCAN_PERIOD);
     }
@@ -182,7 +196,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private BleDeviceInfo findDeviceInfo(BluetoothDevice device) {
-        for (int i = REQ_ENABLE_BT; i < mDevices.size(); i += REQ_DEVICE_ACT) {
+        for (int i = 0; i < mDevices.size(); i++ ) {
             if (((BleDeviceInfo) mDevices.get(i)).getBluetoothDevice().getAddress().equals(device.getAddress())) {
                 return (BleDeviceInfo) mDevices.get(i);
             }
@@ -191,12 +205,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean deviceInfoExists(String address) {
-        for (int i = REQ_ENABLE_BT; i < mDevices.size(); i += REQ_DEVICE_ACT) {
+        for (int i = 0; i < mDevices.size(); i ++) {
             if (((BleDeviceInfo) mDevices.get(i)).getBluetoothDevice().getAddress().equals(address)) {
                 return true;
             }
         }
         return false;
     }
+
+
 
 }

@@ -17,4 +17,5 @@
     <string name="firmware_value">00</string>
     <string name="manufacturer_label">Manufacturer</string>
     <string name="manufacturer_value">Antrax</string>
+    <string name="action_search">search</string>
 </resources>
