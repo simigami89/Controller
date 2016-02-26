@@ -1,12 +1,12 @@
 package com.example.controller;
 
-import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 
 /**
@@ -23,6 +23,15 @@ public class CurvalsFragment extends Fragment {
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
+    static TextView curVal_I_A;
+    static TextView curVal_I_B;
+    static TextView curVal_I_C;
+    static TextView curVal_U_A;
+    static TextView curVal_U_B;
+    static TextView curVal_U_C;
+    static TextView rssi_value;
+
+    private static CurVals mCurVals;
 
     private OnFragmentInteractionListener mListener;
 
@@ -57,26 +66,28 @@ public class CurvalsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_curvals, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_curvals, container, false);
+        mCurVals = CurVals.getInstance();
+
+        curVal_I_A = (TextView) rootView.findViewById(R.id.cur_val_I_A);
+        curVal_U_A = (TextView) rootView.findViewById(R.id.cur_val_U_A);
+        curVal_I_B = (TextView) rootView.findViewById(R.id.cur_val_I_B);
+        curVal_U_B = (TextView) rootView.findViewById(R.id.cur_val_U_B);
+        curVal_I_C = (TextView) rootView.findViewById(R.id.cur_val_I_C);
+        curVal_U_C = (TextView) rootView.findViewById(R.id.cur_val_U_C);
+        rssi_value = (TextView) rootView.findViewById(R.id.rssi_value);
+        return rootView;
     }
 
-//    // TODO: Rename method, update argument and hook method into UI event
-//    public void onButtonPressed(Uri uri) {
-//        if (mListener != null) {
-//            mListener.onFragmentInteraction(uri);
-//        }
-//    }
-//
-//    @Override
-//    public void onAttach(Activity activity) {
-//        super.onAttach(activity);
-//        try {
-//            mListener = (OnFragmentInteractionListener) activity;
-//        } catch (ClassCastException e) {
-//            throw new ClassCastException(activity.toString()
-//                    + " must implement OnFragmentInteractionListener");
-//        }
-//    }
+    public static void showValues(){
+        curVal_I_A.setText(mCurVals.getI_A());
+        curVal_U_A.setText(mCurVals.getU_A());
+        curVal_I_B.setText(mCurVals.getI_B());
+        curVal_U_B.setText(mCurVals.getU_B());
+        curVal_I_C.setText(mCurVals.getI_C());
+        curVal_U_C.setText(mCurVals.getU_C());
+        rssi_value.setText(mCurVals.getRSSI());
+    }
 
     @Override
     public void onDetach() {

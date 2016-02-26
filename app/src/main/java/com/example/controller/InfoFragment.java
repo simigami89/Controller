@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 
 /**
@@ -18,12 +19,13 @@ import android.view.ViewGroup;
  * create an instance of this fragment.
  */
 public class InfoFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
 
-
+    TextView firmwareText;
+    TextView hardwareText;
+    TextView manufacturedText;
+    TextView modelText;
+    TextView serialText;
+    DeviceInfo mDeviceInfo;
 
     private OnFragmentInteractionListener mListener;
 
@@ -58,7 +60,20 @@ public class InfoFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_info, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_info, container, false);
+        mDeviceInfo = DeviceInfo.getInstance();
+        serialText = (TextView) rootView.findViewById(R.id.sn_text);
+        firmwareText = (TextView) rootView.findViewById(R.id.fw_text);
+        hardwareText = (TextView) rootView.findViewById(R.id.hw_text);
+        modelText = (TextView) rootView.findViewById(R.id.model_text);
+        manufacturedText = (TextView) rootView.findViewById(R.id.manufacturer_text);
+
+        serialText.setText(mDeviceInfo.getSerial());
+        firmwareText.setText(mDeviceInfo.getFirmware());
+        hardwareText.setText(mDeviceInfo.getHardware());
+        modelText.setText(mDeviceInfo.getModel());
+        manufacturedText.setText(mDeviceInfo.getManufactured());
+        return rootView;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
