@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Handler;
@@ -82,6 +83,7 @@ public class ConnectedActivity extends AppCompatActivity {
     private SectionsPagerAdapter mSectionsPagerAdapter;
 
     private ViewPager mViewPager;
+    private MenuItem connectBtn;
 
     private static BluetoothManager mBluetoothManager;
     private static BluetoothDevice mDevice;
@@ -143,9 +145,9 @@ public class ConnectedActivity extends AppCompatActivity {
                     CurvalsFragment.showValues();
                 } else if (msg.what == STATE_DISCONNECTED) {
                     toolbar.setSubtitle("Disconncected");
-                    //switchBtnConnect.setIcon(R.drawable.ic_check_circle_white_24dp);
+                    connectBtn.setIcon(R.drawable.ic_check_circle_white_24dp);
                 } else if (msg.what == STATE_CONNECTED) {
-                    //switchBtnConnect.setIcon(R.drawable.ic_cancel_white_24dp);
+                    connectBtn.setIcon(R.drawable.ic_cancel_white_24dp);
                     toolbar.setSubtitle("Conncected");
                 } else if (msg.what == STATE_CONNECTING) {
                     toolbar.setSubtitle("Conncecting...");
@@ -177,6 +179,7 @@ public class ConnectedActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_connected, menu);
+        connectBtn = menu.findItem(R.id.btn_toolbar);
         return true;
     }
 
@@ -192,9 +195,32 @@ public class ConnectedActivity extends AppCompatActivity {
             return true;
         }
 
+        if (id == R.id.btn_toolbar) {
+            if(mBluetoothManager.getConnectionState(mDevice,7) == BluetoothProfile.STATE_CONNECTED){
+                disconnect();
+            }
+            else if(mBluetoothManager.getConnectionState(mDevice,7) == BluetoothProfile.STATE_DISCONNECTED){
+                connect();
+            }
+        }
         return super.onOptionsItemSelected(item);
     }
 
+    private void disconnect() {
+        if (mBluetoothGatt != null) {
+            try {
+                configTimer.cancel();
+                taskConfig.cancel();
+                rssiTimer.cancel();
+                task.cancel();
+                readCharTimer.cancel();
+                taskReadCharConfig.cancel();
+            } catch (Exception e) {
+                Log.d(DEBUG, "timer = NULL");
+            }
+            mBluetoothGatt.disconnect();
+        }
+    }
 
     private BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {

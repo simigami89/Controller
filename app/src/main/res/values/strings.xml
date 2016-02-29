@@ -18,4 +18,5 @@
     <string name="manufacturer_label">Manufacturer</string>
     <string name="manufacturer_value">Antrax</string>
     <string name="action_search">search</string>
+    <string name="btn_toolbar">switch_connect</string>
 </resources>
