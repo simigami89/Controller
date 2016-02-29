@@ -9,12 +9,9 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.TabLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -24,18 +21,14 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -124,6 +117,7 @@ public class ConnectedActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.d(DEBUG, "back");
+                disconnect();
                 finish();
             }
         });
@@ -159,6 +153,12 @@ public class ConnectedActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onDestroy() {
+        disconnect();
+        super.onDestroy();
+    }
+
+    @Override
     protected void onResume() {
         mDeviceInfo = DeviceInfo.getInstance();
         mDevice = (BluetoothDevice) getIntent().getParcelableExtra("device");
@@ -191,17 +191,19 @@ public class ConnectedActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_about) {
             return true;
         }
-
-        if (id == R.id.btn_toolbar) {
+        else if (id == R.id.btn_toolbar) {
             if(mBluetoothManager.getConnectionState(mDevice,7) == BluetoothProfile.STATE_CONNECTED){
                 disconnect();
             }
             else if(mBluetoothManager.getConnectionState(mDevice,7) == BluetoothProfile.STATE_DISCONNECTED){
                 connect();
             }
+        }
+        else if (id == R.id.action_refresh){
+            readInfo();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -251,30 +253,37 @@ public class ConnectedActivity extends AppCompatActivity {
 
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == 0) {
-                for (BluetoothGattService gattService : ConnectedActivity.mBluetoothGatt.getServices()) {
-                    Log.d(ConnectedActivity.DEBUG, "Service discovered: " + gattService.getUuid());
+                int countServices = 0;
+                for (BluetoothGattService gattService : mBluetoothGatt.getServices()) {
+                    Log.d(DEBUG, "Service discovered: " + gattService.getUuid());
                     if (SERVICE_CUR_VALS.equals(gattService.getUuid().toString())) {
-                        ConnectedActivity.mBluetoothGattServiceCurVals = gattService;
-                        ConnectedActivity.deviceServices.add(ConnectedActivity.mBluetoothGattServiceCurVals);
-                        Log.d(ConnectedActivity.DEBUG, "Found cur_vals Service");
+                        mBluetoothGattServiceCurVals = gattService;
+                        deviceServices.add(mBluetoothGattServiceCurVals);
+                        Log.d(DEBUG, "Found cur_vals Service");
+                        countServices++;
                     }
-                    if (ConnectedActivity.LED_SERVICE.equals(gattService.getUuid().toString())) {
-                        ConnectedActivity.mBluetoothGattServiceLed = gattService;
-                        ConnectedActivity.deviceServices.add(ConnectedActivity.mBluetoothGattServiceLed);
-                        Log.d(ConnectedActivity.DEBUG, "Found led Service");
+                    if (LED_SERVICE.equals(gattService.getUuid().toString())) {
+                        mBluetoothGattServiceLed = gattService;
+                        deviceServices.add(mBluetoothGattServiceLed);
+                        Log.d(DEBUG, "Found led Service");
+                        countServices++;
                     }
-                    if (ConnectedActivity.SERVICE_DEVICE_INFO.equals(gattService.getUuid().toString())) {
-                        ConnectedActivity.mBluetoothGattServiceDeviceInfo = gattService;
-                        ConnectedActivity.deviceServices.add(ConnectedActivity.mBluetoothGattServiceDeviceInfo);
-                        Log.d(ConnectedActivity.DEBUG, "Found deviceInfo Service");
+                    if (SERVICE_DEVICE_INFO.equals(gattService.getUuid().toString())) {
+                        mBluetoothGattServiceDeviceInfo = gattService;
+                        deviceServices.add(mBluetoothGattServiceDeviceInfo);
+                        Log.d(DEBUG, "Found deviceInfo Service");
+                        countServices++;
                     }
-                    if (ConnectedActivity.SERVICE_BANK_INFO.equals(gattService.getUuid().toString())) {
-                        ConnectedActivity.mBluetoothGattServiceBankInfo = gattService;
-                        ConnectedActivity.deviceServices.add(ConnectedActivity.mBluetoothGattServiceBankInfo);
-                        Log.d(ConnectedActivity.DEBUG, "Found BankInfo Service");
+                    if (SERVICE_BANK_INFO.equals(gattService.getUuid().toString())) {
+                        mBluetoothGattServiceBankInfo = gattService;
+                        deviceServices.add(mBluetoothGattServiceBankInfo);
+                        Log.d(DEBUG, "Found BankInfo Service");
+                        countServices++;
                     }
                 }
-                enableNotification();
+                if(countServices == 4) {
+                    enableNotification();
+                }
                 return;
             }
             Log.d(ConnectedActivity.DEBUG, "onServicesDiscovered received: " + status);
@@ -351,111 +360,111 @@ public class ConnectedActivity extends AppCompatActivity {
             Log.d(ConnectedActivity.DEBUG, str);
         }
 
-        public String byteToHex(byte[] b) {
-            String str = "";
-            for (int i = 0; i < b.length; i ++) {
-                str = str + Integer.toHexString(b[i] & 255);
-            }
-            return str;
-        }
-
-        private void enableNotification() {
-            charEnabledCount = 0;
-            if (configTimer != null) {
-                configTimer.cancel();
-            }
-            if (taskConfig != null) {
-                taskConfig.cancel();
-            }
-            configTimer = new Timer();
-            taskConfig = new TimerTask() {
-                public void run() {
-                    switch (charEnabledCount) {
-                        case 0:
-                            gattCharacteristic1 = mBluetoothGattServiceCurVals.getCharacteristic(UUID.fromString(CHAR_CUR_VAL_I_A));
-                            mBluetoothGatt.setCharacteristicNotification(ConnectedActivity.gattCharacteristic1, true);
-                            break;
-                        case 1:
-                           gattCharacteristic1 = mBluetoothGattServiceCurVals.getCharacteristic(UUID.fromString(CHAR_CUR_VAL_U_A));
-                            mBluetoothGatt.setCharacteristicNotification(ConnectedActivity.gattCharacteristic1, true);
-                            break;
-                        case 2:
-                           gattCharacteristic1 = mBluetoothGattServiceCurVals.getCharacteristic(UUID.fromString(CHAR_CUR_VAL_I_B));
-                            mBluetoothGatt.setCharacteristicNotification(ConnectedActivity.gattCharacteristic1, true);
-                            break;
-                        case 3:
-                           gattCharacteristic1 = mBluetoothGattServiceCurVals.getCharacteristic(UUID.fromString(CHAR_CUR_VAL_U_B));
-                            mBluetoothGatt.setCharacteristicNotification(ConnectedActivity.gattCharacteristic1, true);
-                            break;
-                        case 4:
-                            gattCharacteristic1 = mBluetoothGattServiceCurVals.getCharacteristic(UUID.fromString(CHAR_CUR_VAL_I_C));
-                            mBluetoothGatt.setCharacteristicNotification(ConnectedActivity.gattCharacteristic1, true);
-                            break;
-                        case 5:
-                            gattCharacteristic1 = mBluetoothGattServiceCurVals.getCharacteristic(UUID.fromString(CHAR_CUR_VAL_U_C));
-                            mBluetoothGatt.setCharacteristicNotification(ConnectedActivity.gattCharacteristic1, true);
-                            break;
-                    }
-                    BluetoothGattDescriptor descriptor = gattCharacteristic1.getDescriptor(UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG));
-                    descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                    mBluetoothGatt.writeDescriptor(descriptor);
-                    charEnabledCount++;
-                    if (charEnabledCount == 6) {
-                        configTimer.cancel();
-                        readInfo();
-                    }
-                }
-            };
-            configTimer.schedule(taskConfig, 200, 200);
-        }
-
-        private void readInfo() {
-            charReadCount = 0;
-            if (readCharTimer != null) {
-                readCharTimer.cancel();
-            }
-            if (taskReadCharConfig != null) {
-                taskReadCharConfig.cancel();
-            }
-            readCharTimer = new Timer();
-            taskReadCharConfig = new TimerTask() {
-                public void run() {
-                    switch (ConnectedActivity.charReadCount) {
-                        case 0:
-                            mBluetoothGatt.readCharacteristic(mBluetoothGattServiceDeviceInfo.getCharacteristic(UUID.fromString(MODEL_VERSION_CHARACTERISTIC)));
-                            break;
-                        case 1:
-                            mBluetoothGatt.readCharacteristic(mBluetoothGattServiceDeviceInfo.getCharacteristic(UUID.fromString(SERIAL_NUMBER_CHARACTERISTIC)));
-                            break;
-                        case 2:
-                            mBluetoothGatt.readCharacteristic(mBluetoothGattServiceDeviceInfo.getCharacteristic(UUID.fromString(HARDWARE_VERSION_CHARACTERISTIC)));
-                            break;
-                        case 3:
-                            mBluetoothGatt.readCharacteristic(mBluetoothGattServiceDeviceInfo.getCharacteristic(UUID.fromString(FIRMWARE_VERSION_CHARACTERISTIC)));
-                            break;
-                        case 4:
-                           mBluetoothGatt.readCharacteristic(mBluetoothGattServiceDeviceInfo.getCharacteristic(UUID.fromString(MANUFACTURED_CHARACTERISTIC)));
-                            break;
-                        case 5:
-                            mBluetoothGatt.readCharacteristic(mBluetoothGattServiceBankInfo.getCharacteristic(UUID.fromString(DEVICE_1_ADDRESS)));
-                            break;
-                        case 6:
-                            mBluetoothGatt.readCharacteristic(mBluetoothGattServiceBankInfo.getCharacteristic(UUID.fromString(DEVICE_2_ADDRESS)));
-                            break;
-                        case 7:
-                            mBluetoothGatt.readCharacteristic(mBluetoothGattServiceBankInfo.getCharacteristic(UUID.fromString(PHASE)));
-                            break;
-                    }
-                    if (ConnectedActivity.charReadCount == 7) {
-                        readCharTimer.cancel();
-                    }
-                    charReadCount++;
-                }
-            };
-            readCharTimer.schedule(taskReadCharConfig, 100, 100);
-        }
-
     };
+
+    public String byteToHex(byte[] b) {
+        String str = "";
+        for (int i = 0; i < b.length; i ++) {
+            str = str + Integer.toHexString(b[i] & 255);
+        }
+        return str;
+    }
+
+    private void enableNotification() {
+        charEnabledCount = 0;
+        if (configTimer != null) {
+            configTimer.cancel();
+        }
+        if (taskConfig != null) {
+            taskConfig.cancel();
+        }
+        configTimer = new Timer();
+        taskConfig = new TimerTask() {
+            public void run() {
+                switch (charEnabledCount) {
+                    case 0:
+                        gattCharacteristic1 = mBluetoothGattServiceCurVals.getCharacteristic(UUID.fromString(CHAR_CUR_VAL_I_A));
+                        mBluetoothGatt.setCharacteristicNotification(ConnectedActivity.gattCharacteristic1, true);
+                        break;
+                    case 1:
+                        gattCharacteristic1 = mBluetoothGattServiceCurVals.getCharacteristic(UUID.fromString(CHAR_CUR_VAL_U_A));
+                        mBluetoothGatt.setCharacteristicNotification(ConnectedActivity.gattCharacteristic1, true);
+                        break;
+                    case 2:
+                        gattCharacteristic1 = mBluetoothGattServiceCurVals.getCharacteristic(UUID.fromString(CHAR_CUR_VAL_I_B));
+                        mBluetoothGatt.setCharacteristicNotification(ConnectedActivity.gattCharacteristic1, true);
+                        break;
+                    case 3:
+                        gattCharacteristic1 = mBluetoothGattServiceCurVals.getCharacteristic(UUID.fromString(CHAR_CUR_VAL_U_B));
+                        mBluetoothGatt.setCharacteristicNotification(ConnectedActivity.gattCharacteristic1, true);
+                        break;
+                    case 4:
+                        gattCharacteristic1 = mBluetoothGattServiceCurVals.getCharacteristic(UUID.fromString(CHAR_CUR_VAL_I_C));
+                        mBluetoothGatt.setCharacteristicNotification(ConnectedActivity.gattCharacteristic1, true);
+                        break;
+                    case 5:
+                        gattCharacteristic1 = mBluetoothGattServiceCurVals.getCharacteristic(UUID.fromString(CHAR_CUR_VAL_U_C));
+                        mBluetoothGatt.setCharacteristicNotification(ConnectedActivity.gattCharacteristic1, true);
+                        break;
+                }
+                BluetoothGattDescriptor descriptor = gattCharacteristic1.getDescriptor(UUID.fromString(CLIENT_CHARACTERISTIC_CONFIG));
+                descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                mBluetoothGatt.writeDescriptor(descriptor);
+                charEnabledCount++;
+                if (charEnabledCount == 6) {
+                    configTimer.cancel();
+                    readInfo();
+                }
+            }
+        };
+        configTimer.schedule(taskConfig, 200, 200);
+    }
+
+    private void readInfo() {
+        charReadCount = 0;
+        if (readCharTimer != null) {
+            readCharTimer.cancel();
+        }
+        if (taskReadCharConfig != null) {
+            taskReadCharConfig.cancel();
+        }
+        readCharTimer = new Timer();
+        taskReadCharConfig = new TimerTask() {
+            public void run() {
+                switch (ConnectedActivity.charReadCount) {
+                    case 0:
+                        mBluetoothGatt.readCharacteristic(mBluetoothGattServiceDeviceInfo.getCharacteristic(UUID.fromString(MODEL_VERSION_CHARACTERISTIC)));
+                        break;
+                    case 1:
+                        mBluetoothGatt.readCharacteristic(mBluetoothGattServiceDeviceInfo.getCharacteristic(UUID.fromString(SERIAL_NUMBER_CHARACTERISTIC)));
+                        break;
+                    case 2:
+                        mBluetoothGatt.readCharacteristic(mBluetoothGattServiceDeviceInfo.getCharacteristic(UUID.fromString(HARDWARE_VERSION_CHARACTERISTIC)));
+                        break;
+                    case 3:
+                        mBluetoothGatt.readCharacteristic(mBluetoothGattServiceDeviceInfo.getCharacteristic(UUID.fromString(FIRMWARE_VERSION_CHARACTERISTIC)));
+                        break;
+                    case 4:
+                        mBluetoothGatt.readCharacteristic(mBluetoothGattServiceDeviceInfo.getCharacteristic(UUID.fromString(MANUFACTURED_CHARACTERISTIC)));
+                        break;
+                    case 5:
+                        mBluetoothGatt.readCharacteristic(mBluetoothGattServiceBankInfo.getCharacteristic(UUID.fromString(DEVICE_1_ADDRESS)));
+                        break;
+                    case 6:
+                        mBluetoothGatt.readCharacteristic(mBluetoothGattServiceBankInfo.getCharacteristic(UUID.fromString(DEVICE_2_ADDRESS)));
+                        break;
+                    case 7:
+                        mBluetoothGatt.readCharacteristic(mBluetoothGattServiceBankInfo.getCharacteristic(UUID.fromString(PHASE)));
+                        break;
+                }
+                if (ConnectedActivity.charReadCount == 7) {
+                    readCharTimer.cancel();
+                }
+                charReadCount++;
+            }
+        };
+        readCharTimer.schedule(taskReadCharConfig, 100, 100);
+    }
 
 
     public static void writeCharacteristicValue(String service, String characteristic, byte[] bytes, View view) {
