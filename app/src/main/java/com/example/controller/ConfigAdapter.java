@@ -149,15 +149,20 @@ public class ConfigAdapter extends BaseExpandableListAdapter {
                     new AlertDialog.Builder(finalConvertView.getContext()).setTitle("Set new value").setView(editText).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int which) {
                             String str = String.valueOf(editText.getText());
-                            byte[] bytes = hexStringToByteArray(str);
+
                             if (i2 == 0) {
+                                byte[] bytes = hexStringToByteArray(str);
                                 deviceInfo.setDevice1(str);
                                 ConnectedActivity.writeCharacteristicValue(ConnectedActivity.SERVICE_BANK_INFO, ConnectedActivity.DEVICE_1_ADDRESS, bytes, finalConvertView);
                             } else if (i2 == 1) {
+                                byte[] bytes = hexStringToByteArray(str);
                                 deviceInfo.setDevice2(str);
                                 ConnectedActivity.writeCharacteristicValue(ConnectedActivity.SERVICE_BANK_INFO, ConnectedActivity.DEVICE_2_ADDRESS, bytes, finalConvertView);
                             } else if (i2 == 2) {
                                 deviceInfo.setPhase(str);
+                                String ss = toHex(str);
+                                Log.d(DEBUG,ss);
+                                byte[] bytes = hexStringToByteArray(ss);
                                 ConnectedActivity.writeCharacteristicValue(ConnectedActivity.SERVICE_BANK_INFO, ConnectedActivity.PHASE, bytes, finalConvertView);
                             }
                             textChildValue.setText(str);
