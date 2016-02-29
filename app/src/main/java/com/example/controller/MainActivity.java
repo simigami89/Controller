@@ -82,6 +82,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStop() {
+        mDevices.clear();
+        mDeviceAdapter.notifyDataSetChanged();
+        super.onStop();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
@@ -93,6 +100,8 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }else if (id == R.id.action_search){
             search.setActionView(R.layout.progress_bar);
+            mDevices.clear();
+            mDeviceAdapter.notifyDataSetChanged();
             startScan();
         }
 
